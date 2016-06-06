@@ -1,5 +1,5 @@
 # s3_log_loader
-Loads and parses S3 logs and inserts them as is into SQL database.
+Loads and parses S3 logs and inserts them as is into SQL database. The S3 objects are deleted after being inserted.
 
 ## Prerequisites
 * Set up your database
