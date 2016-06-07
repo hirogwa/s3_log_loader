@@ -35,16 +35,20 @@ def load_log(bucket, key, dry_run):
     session = models.Session()
     obj = client.get_object(Bucket=bucket, Key=key)
     body = obj.get('Body').read().decode('utf-8')
+    entry_count = 0
     for x in body.split('\n')[:-1]:
         delim = '\n'
         line = replace_delimiter(x, delim)
         entry = models.LogEntryRaw(*line.split(delim))
+        entry_count += 1
         if not dry_run:
             session.add(entry)
 
     if not dry_run:
         session.commit()
         client.delete_object(Bucket=bucket, Key=key)
+
+    return entry_count
 
 
 def extract(bucket, max_keys=1000, prefix='', dry_run=False):
@@ -56,10 +60,11 @@ def extract(bucket, max_keys=1000, prefix='', dry_run=False):
     )
 
     keys = [x.get('Key') for x in response.get('Contents', [])]
+    entry_count = 0
     for key in keys:
-        load_log(bucket, key, dry_run)
-    click.echo('keys processed: {} {}'.format(
-        len(keys), '(dry run)' if dry_run else ''))
+        entry_count += load_log(bucket, key, dry_run)
+    click.echo('keys processed:{}, log entry recorded:{} {}'.format(
+        len(keys), entry_count, '(dry run)' if dry_run else ''))
 
 
 @click.command()
